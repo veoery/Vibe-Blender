@@ -62,6 +62,7 @@ Scene description: {scene_description}"""
         user_prompt: str,
         scene_description: SceneDescription,
         iteration: int,
+        reference_images: Optional[list[Path]] = None,
     ) -> CritiqueResult:
         """Analyze rendered images and provide feedback.
 
@@ -70,6 +71,7 @@ Scene description: {scene_description}"""
             user_prompt: Original user prompt
             scene_description: Scene description from Planner
             iteration: Current iteration number
+            reference_images: Optional reference images for comparison
 
         Returns:
             CritiqueResult with verdict and feedback
@@ -93,10 +95,17 @@ Scene description: {scene_description}"""
 
         # Collect images to analyze
         images = []
+
+        # Add reference images first (if provided)
+        if reference_images:
+            images.extend(reference_images)
+            logger.info(f"Including {len(reference_images)} reference images in critique")
+
+        # Add rendered image
         if render_output.grid_image and render_output.grid_image.exists():
             images.append(render_output.grid_image)
 
-        if not images:
+        if not images or (reference_images and len(images) == len(reference_images)):
             logger.error("No render images found for critique")
             return CritiqueResult(
                 verdict=CritiqueVerdict.FAIL,
@@ -108,12 +117,28 @@ Scene description: {scene_description}"""
             )
 
         # Format the prompt
-        # logger.info("Prompt for critic model:\n")
-        prompt = self.prompt_template.format(
+        prompt_parts = [self.prompt_template.format(
             user_prompt=user_prompt,
             scene_description=scene_description.model_dump_json(indent=2),
-        )
-        # logger.info(prompt[:800])
+        )]
+
+        # Add reference comparison note if applicable
+        if reference_images:
+            ref_note = f"""
+The first {len(reference_images)} image(s) are REFERENCE images showing the desired style.
+The last image is the GENERATED render to evaluate.
+
+Compare the generated render against the reference images for:
+- Style consistency (realistic, low-poly, etc.)
+- Material accuracy (textures, finishes)
+- Color palette alignment
+- Overall aesthetic match
+
+Be more lenient if the style generally matches the references, even if details differ.
+"""
+            prompt_parts.append(ref_note)
+
+        prompt = "\n".join(prompt_parts)
 
         # Analyze with vision
         response = self.llm.analyze_images(

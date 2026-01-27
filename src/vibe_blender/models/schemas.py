@@ -33,11 +33,27 @@ class ClarificationResponse(BaseModel):
     timestamp: datetime = Field(default_factory=datetime.now)
 
 
+class ReferenceAnalysis(BaseModel):
+    """Analysis of reference images by the Planner."""
+
+    style_notes: str = Field(..., description="Visual style observations (realistic, low-poly, etc.)")
+    materials: list[str] = Field(default_factory=list, description="Materials detected")
+    colors: list[str] = Field(default_factory=list, description="Dominant colors (hex or names)")
+    shapes: list[str] = Field(default_factory=list, description="Key shapes and forms")
+    details: str = Field(..., description="Additional notable details")
+    timestamp: datetime = Field(default_factory=datetime.now)
+
+
 class UserPrompt(BaseModel):
     """Original user input for 3D generation."""
 
     text: str = Field(..., description="The user's text prompt describing the 3D object")
     clarifications: Optional[ClarificationResponse] = Field(None, description="User's clarification responses")
+    reference_images: Optional[list[Path]] = Field(
+        None,
+        description="Optional reference image paths for style/aesthetic guidance",
+        max_length=5
+    )
     timestamp: datetime = Field(default_factory=datetime.now)
 
     def get_enriched_prompt(self) -> str:
@@ -54,6 +70,34 @@ class UserPrompt(BaseModel):
             for key, value in self.clarifications.answers.items()
         )
         return f"{self.text}\n\nAdditional details:\n{clarification_text}"
+
+    def has_references(self) -> bool:
+        """Check if reference images are provided.
+
+        Returns:
+            True if reference images exist and list is not empty
+        """
+        return bool(self.reference_images and len(self.reference_images) > 0)
+
+    def validate_references(self) -> list[str]:
+        """Validate reference images and return list of errors.
+
+        Returns:
+            List of error messages (empty if all valid)
+        """
+        if not self.reference_images:
+            return []
+
+        errors = []
+        valid_formats = {'.png', '.jpg', '.jpeg', '.gif', '.webp'}
+
+        for ref_path in self.reference_images:
+            if not ref_path.exists():
+                errors.append(f"Reference image not found: {ref_path}")
+            elif ref_path.suffix.lower() not in valid_formats:
+                errors.append(f"Unsupported format {ref_path.suffix}: {ref_path.name}")
+
+        return errors
 
 
 class ObjectDescription(BaseModel):
@@ -86,6 +130,10 @@ class SceneDescription(BaseModel):
     lighting: Optional[str] = Field(None, description="Lighting setup description")
     camera_notes: Optional[str] = Field(None, description="Special camera considerations")
     complexity: str = Field("medium", description="Estimated complexity: simple, medium, complex")
+    reference_analysis: Optional[ReferenceAnalysis] = Field(
+        None,
+        description="Analysis of reference images if provided"
+    )
 
 
 class GeneratedScript(BaseModel):

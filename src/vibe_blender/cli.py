@@ -35,7 +35,7 @@ def generate(
         None, "--config", "-c", help="Path to configuration file"
     ),
     max_retries: Optional[int] = typer.Option(
-        None, "--max-retries", "-r", help="Maximum retry attempts (overrides config)"
+        None, "--max-retries", help="Maximum retry attempts (overrides config)"
     ),
     verbose: bool = typer.Option(
         False, "--verbose", "-v", help="Enable verbose logging"
@@ -45,16 +45,30 @@ def generate(
         "--no-interactive",
         help="Disable interactive clarification prompts"
     ),
+    reference: Optional[list[Path]] = typer.Option(
+        None,
+        "--reference",
+        "-r",
+        help="Reference image(s) for style/material guidance (can use multiple times)",
+        exists=True,
+        dir_okay=False,
+        readable=True,
+    ),
 ):
     """Generate a 3D model from a text prompt.
 
     By default, the planner will ask clarifying questions if your prompt
     is unclear. Use --no-interactive to disable this behavior.
 
+    You can optionally provide reference images to guide the style, materials,
+    and colors of the generated model.
+
     Examples:
         vibe-blender generate "A table"  # Will ask what type of table
         vibe-blender generate "A cyberpunk coffee table"  # Clear, no questions
         vibe-blender generate "A table" --no-interactive  # Skip questions
+        vibe-blender generate "A table" --reference style.png  # With reference
+        vibe-blender generate "A chair" --reference style.png --reference material.jpg
     """
     # Load configuration
     try:
@@ -89,6 +103,13 @@ def generate(
     console.print(f"Backend: {cfg.llm.backend}")
     console.print(f"Max retries: {cfg.pipeline.max_retries}")
     console.print(f"Interactive: {'Yes' if interactive else 'No'}")
+
+    # Display reference images if provided
+    if reference:
+        console.print(f"Reference images: {len(reference)}")
+        for ref in reference:
+            console.print(f"  - {ref.name}")
+
     console.print(f"Log file: {log_file}")
     console.print()
 
@@ -100,7 +121,7 @@ def generate(
         if interactive:
             orchestrator.on_clarification = _handle_clarification_prompt
 
-        state = orchestrator.run(prompt, output)
+        state = orchestrator.run(prompt, output, reference_images=reference)
 
         # Return appropriate exit code
         if state.status.value == "success":

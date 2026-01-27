@@ -97,12 +97,14 @@ class Orchestrator:
         self,
         prompt: str,
         output_dir: Optional[Path] = None,
+        reference_images: Optional[list[Path]] = None,
     ) -> PipelineState:
         """Run the full pipeline for a given prompt.
 
         Args:
             prompt: User's text prompt describing the 3D model
             output_dir: Optional output directory (defaults from config)
+            reference_images: Optional reference image paths for style guidance
 
         Returns:
             Final PipelineState with results
@@ -117,6 +119,7 @@ class Orchestrator:
         logger.info(f"Starting pipeline for: {prompt[:100]}...")
         logger.info(f"Output directory: {output_dir}")
         logger.info(f"Interactive mode: {self.interactive}")
+        logger.info(f"Reference images: {len(reference_images) if reference_images else 0}")
 
         try:
             # Phase 0: Clarification (if interactive)
@@ -128,6 +131,17 @@ class Orchestrator:
                 logger.info("Non-interactive mode - skipping clarification phase")
                 user_prompt = UserPrompt(text=prompt)
 
+            # Add reference images to UserPrompt
+            if reference_images:
+                user_prompt.reference_images = reference_images
+
+                # Validate references
+                errors = user_prompt.validate_references()
+                if errors:
+                    for error in errors:
+                        logger.error(error)
+                    raise ValueError(f"Reference image validation failed: {errors[0]}")
+
             # Initialize state
             state = PipelineState(
                 user_prompt=user_prompt,
@@ -135,12 +149,24 @@ class Orchestrator:
                 output_dir=output_dir,
             )
 
+            # Phase 0.5: Analyze references (if provided)
+            reference_analysis = None
+            if user_prompt.has_references():
+                console.print(f"[bold blue]Analyzing {len(user_prompt.reference_images)} reference image(s)...[/bold blue]")
+                logger.info("Phase 0.5: Reference image analysis...")
+                reference_analysis = self.planner.analyze_references(
+                    user_prompt.reference_images,
+                    user_prompt.text,
+                )
+                logger.info(f"Reference style: {reference_analysis.style_notes[:100]}...")
+
             # Phase 1: Planning
             console.print("[bold blue]Phase 1: Planning scene...[/bold blue]")
             logger.info("Phase 1: Planning scene...")
-            state.scene_description = self.planner.plan_with_clarifications(
+            state.scene_description = self.planner.plan_with_references(
                 user_prompt.text,
                 user_prompt.clarifications,
+                reference_analysis,
             )
             logger.info(f"Scene planned: {state.scene_description.summary}")
 
@@ -240,6 +266,7 @@ class Orchestrator:
                     user_prompt=state.user_prompt.text,
                     scene_description=state.scene_description,
                     iteration=iteration,
+                    reference_images=state.user_prompt.reference_images if state.user_prompt.has_references() else None,
                 )
                 record.critique = critique
 
