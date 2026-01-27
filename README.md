@@ -79,6 +79,13 @@ vibe-blender generate "A low-poly modern coffee table with wooden top and metal 
 # No questions needed - generates immediately
 ```
 
+### Image-Reference Mode
+For scripts or batch processing:
+
+```bash
+vibe-blender generate "A chair" -r path/to/ref_image
+```
+
 ### Non-Interactive Mode
 For scripts or batch processing:
 
