@@ -58,6 +58,7 @@ class BaseLLM(ABC):
         image_paths: list[Path | str],
         prompt: str,
         system: Optional[str] = None,
+        max_tokens: Optional[int] = None,
     ) -> str:
         """Analyze multiple images and respond to a prompt.
 

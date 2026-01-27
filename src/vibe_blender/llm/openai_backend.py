@@ -45,7 +45,7 @@ class OpenAIBackend(BaseLLM):
     def generate(
         self,
         prompt: str,
-        system: Optional[str] = None,
+        system: Optional[str] = "",
         temperature: float = 1.0,
         max_tokens: Optional[int] = None,
     ) -> str:
@@ -68,6 +68,7 @@ class OpenAIBackend(BaseLLM):
         messages.append({"role": "user", "content": prompt})
 
         logger.debug(f"Generating with {self.model}, temp={temperature}")
+        logger.info(f"LLM Input chars: {len(system+prompt)}")
         logger.debug(f"LLM Input - System: {system}")
         logger.debug(f"LLM Input - Prompt: {prompt}")
 
@@ -83,7 +84,8 @@ class OpenAIBackend(BaseLLM):
         response = self.client.chat.completions.create(**kwargs)
         result = response.choices[0].message.content
 
-        logger.debug(f"LLM Output ({len(result)} chars): {(result[:500] + '...') if len(result) > 500 else result}")
+        logger.info(f"LLM Output chars: {len(result)}")
+        logger.debug(f"LLM Output: {(result[:500] + '...') if len(result) > 500 else result}")
         return result
 
     def analyze_image(
@@ -91,6 +93,7 @@ class OpenAIBackend(BaseLLM):
         image_path: Path | str,
         prompt: str,
         system: Optional[str] = None,
+        max_tokens: Optional[int] = None,
     ) -> str:
         """Analyze a single image using GPT-4o vision.
 
@@ -98,17 +101,19 @@ class OpenAIBackend(BaseLLM):
             image_path: Path to the image
             prompt: Analysis prompt
             system: Optional system prompt
+            max_tokens: Maximum tokens (unused, for API compatibility)
 
         Returns:
             Analysis response
         """
-        return self.analyze_images([image_path], prompt, system)
+        return self.analyze_images([image_path], prompt, system, max_tokens)
 
     def analyze_images(
         self,
         image_paths: list[Path | str],
         prompt: str,
-        system: Optional[str] = None,
+        system: Optional[str] = "",
+        max_tokens: Optional[int] = None,
     ) -> str:
         """Analyze multiple images using GPT-4o vision.
 
@@ -116,6 +121,7 @@ class OpenAIBackend(BaseLLM):
             image_paths: List of image paths
             prompt: Analysis prompt
             system: Optional system prompt
+            max_tokens: Maximum tokens (unused, for API compatibility)
 
         Returns:
             Analysis response
@@ -160,8 +166,9 @@ class OpenAIBackend(BaseLLM):
 
         messages.append({"role": "user", "content": content})
 
+        logger.info(f"Vision Critic Input chars: {len(system+prompt)}")
         logger.debug(f"Analyzing {len(image_paths)} images with {self.model}")
-        logger.debug(f"Vision Input - Prompt: {(prompt[:500] + '...') if len(prompt) > 500 else prompt}")
+        logger.debug(f"Vision Critic Input - Prompt: {(prompt[:500] + '...') if len(prompt) > 500 else prompt}")
 
         response = self.client.chat.completions.create(
             model=self.model,
@@ -170,6 +177,7 @@ class OpenAIBackend(BaseLLM):
         )
 
         result = response.choices[0].message.content
-        logger.debug(f"Vision Output ({len(result)} chars): {(result[:800] + '...') if len(result) > 800 else result}")
+        logger.info(f"Vision Critic Output chars: {len(result)}")
+        logger.debug(f"Vision Critic Output: {(result[:800] + '...') if len(result) > 800 else result}")
 
         return result

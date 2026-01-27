@@ -122,16 +122,10 @@ class Orchestrator:
         logger.info(f"Reference images: {len(reference_images) if reference_images else 0}")
 
         try:
-            # Phase 0: Clarification (if interactive)
-            if self.interactive:
-                console.print("[bold blue]Phase 0: Analyzing prompt...[/bold blue]")
-                logger.info("Phase 0: Clarification check...")
-                user_prompt = self._clarification_phase(prompt)
-            else:
-                logger.info("Non-interactive mode - skipping clarification phase")
-                user_prompt = UserPrompt(text=prompt)
+            # Create initial user prompt
+            user_prompt = UserPrompt(text=prompt)
 
-            # Add reference images to UserPrompt
+            # Validate and add reference images to UserPrompt
             if reference_images:
                 user_prompt.reference_images = reference_images
 
@@ -142,6 +136,16 @@ class Orchestrator:
                         logger.error(error)
                     raise ValueError(f"Reference image validation failed: {errors[0]}")
 
+            # Phase 0: Clarification check (considers both text AND reference images)
+            if self.interactive:
+                console.print("[bold blue]Phase 0: Analyzing prompt clarity...[/bold blue]")
+                logger.info("Phase 0: Clarification check (with reference images if provided)...")
+                clarified_prompt = self._clarification_phase(prompt, user_prompt.reference_images)
+                # Preserve reference images when merging clarifications
+                user_prompt.clarifications = clarified_prompt.clarifications
+            else:
+                logger.info("Non-interactive mode - skipping clarification phase")
+
             # Initialize state
             state = PipelineState(
                 user_prompt=user_prompt,
@@ -149,24 +153,13 @@ class Orchestrator:
                 output_dir=output_dir,
             )
 
-            # Phase 0.5: Analyze references (if provided)
-            reference_analysis = None
-            if user_prompt.has_references():
-                console.print(f"[bold blue]Analyzing {len(user_prompt.reference_images)} reference image(s)...[/bold blue]")
-                logger.info("Phase 0.5: Reference image analysis...")
-                reference_analysis = self.planner.analyze_references(
-                    user_prompt.reference_images,
-                    user_prompt.text,
-                )
-                logger.info(f"Reference style: {reference_analysis.style_notes[:100]}...")
-
             # Phase 1: Planning
             console.print("[bold blue]Phase 1: Planning scene...[/bold blue]")
             logger.info("Phase 1: Planning scene...")
-            state.scene_description = self.planner.plan_with_references(
+            state.scene_description = self.planner.plan(
                 user_prompt.text,
                 user_prompt.clarifications,
-                reference_analysis,
+                user_prompt.reference_images,
             )
             logger.info(f"Scene planned: {state.scene_description.summary}")
 
@@ -184,18 +177,25 @@ class Orchestrator:
 
         return state
 
-    def _clarification_phase(self, prompt: str) -> UserPrompt:
+    def _clarification_phase(
+        self,
+        prompt: str,
+        reference_images: Optional[list[Path]] = None,
+    ) -> UserPrompt:
         """Handle clarification detection and collection.
 
         Args:
             prompt: The user's original prompt text
+            reference_images: Optional reference images to consider
 
         Returns:
             UserPrompt with optional clarifications
         """
-        # Check if clarification needed
+        # Check if clarification needed (considers text + images together)
         logger.info("Checking if clarification is needed...")
-        request = self.planner.check_clarity(prompt)
+        if reference_images:
+            logger.info(f"Considering {len(reference_images)} reference images in clarity check")
+        request = self.planner.check_clarity(prompt, reference_images)
 
         if not request.needs_clarification:
             logger.info("No clarification needed - prompt is clear")
@@ -242,11 +242,13 @@ class Orchestrator:
                         scene_description=state.scene_description,
                         feedback=feedback,
                         iteration=iteration,
+                        reference_images=state.user_prompt.reference_images,
                     )
                 else:
                     script = self.generator.generate(
                         scene_description=state.scene_description,
                         iteration=iteration,
+                        reference_images=state.user_prompt.reference_images,
                     )
                 record.script = script
                 logger.info("Script generated successfully")

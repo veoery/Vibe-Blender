@@ -51,6 +51,7 @@ Feedback: {feedback}"""
         scene_description: SceneDescription,
         iteration: int = 1,
         feedback: Optional[str] = None,
+        reference_images: Optional[list[Path]] = None,
     ) -> GeneratedScript:
         """Generate a Blender Python script for the scene.
 
@@ -58,6 +59,7 @@ Feedback: {feedback}"""
             scene_description: Structured scene description from Planner
             iteration: Current iteration number
             feedback: Optional feedback from previous iteration
+            reference_images: Optional reference images for style guidance
 
         Returns:
             GeneratedScript with the Python code
@@ -72,11 +74,21 @@ Feedback: {feedback}"""
             feedback=feedback or "None - this is the first iteration",
         )
 
-        response = self.llm.generate(
-            prompt=prompt,
-            temperature=1.0,  # Moderate temperature for code generation
-            max_tokens=4000,
-        )
+        # Use vision API if images provided
+        if reference_images:
+            logger.info(f"Generating with {len(reference_images)} reference images")
+            response = self.llm.analyze_images(
+                image_paths=reference_images,
+                prompt=prompt,
+                max_tokens=4000,
+            )
+        else:
+            logger.info("Generating without reference images")
+            response = self.llm.generate(
+                prompt=prompt,
+                temperature=1.0,  # Moderate temperature for code generation
+                max_tokens=4000,
+            )
 
         # Extract the Python code from the response
         code = self._extract_code(response)
@@ -121,6 +133,7 @@ Feedback: {feedback}"""
         scene_description: SceneDescription,
         feedback: str,
         iteration: int,
+        reference_images: Optional[list[Path]] = None,
     ) -> GeneratedScript:
         """Refine a script based on feedback.
 
@@ -131,6 +144,7 @@ Feedback: {feedback}"""
             scene_description: Original scene description
             feedback: Feedback from the Critic
             iteration: New iteration number
+            reference_images: Optional reference images for style guidance
 
         Returns:
             Refined GeneratedScript
@@ -150,4 +164,5 @@ Please fix the issues mentioned above while keeping what works well."""
             scene_description=scene_description,
             iteration=iteration,
             feedback=full_feedback,
+            reference_images=reference_images,
         )

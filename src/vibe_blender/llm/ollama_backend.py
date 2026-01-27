@@ -110,6 +110,7 @@ class OllamaBackend(BaseLLM):
         image_path: Path | str,
         prompt: str,
         system: Optional[str] = None,
+        max_tokens: Optional[int] = None,
     ) -> str:
         """Analyze a single image using LLaVA.
 
@@ -117,17 +118,19 @@ class OllamaBackend(BaseLLM):
             image_path: Path to the image
             prompt: Analysis prompt
             system: Optional system prompt
+            max_tokens: Maximum tokens (unused, for API compatibility)
 
         Returns:
             Analysis response
         """
-        return self.analyze_images([image_path], prompt, system)
+        return self.analyze_images([image_path], prompt, system, max_tokens)
 
     def analyze_images(
         self,
         image_paths: list[Path | str],
         prompt: str,
         system: Optional[str] = None,
+        max_tokens: Optional[int] = None,
     ) -> str:
         """Analyze multiple images using LLaVA.
 
@@ -135,6 +138,7 @@ class OllamaBackend(BaseLLM):
             image_paths: List of image paths
             prompt: Analysis prompt
             system: Optional system prompt
+            max_tokens: Maximum tokens (unused, for API compatibility)
 
         Returns:
             Analysis response

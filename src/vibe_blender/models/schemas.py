@@ -33,17 +33,6 @@ class ClarificationResponse(BaseModel):
     timestamp: datetime = Field(default_factory=datetime.now)
 
 
-class ReferenceAnalysis(BaseModel):
-    """Analysis of reference images by the Planner."""
-
-    style_notes: str = Field(..., description="Visual style observations (realistic, low-poly, etc.)")
-    materials: list[str] = Field(default_factory=list, description="Materials detected")
-    colors: list[str] = Field(default_factory=list, description="Dominant colors (hex or names)")
-    shapes: list[str] = Field(default_factory=list, description="Key shapes and forms")
-    details: str = Field(..., description="Additional notable details")
-    timestamp: datetime = Field(default_factory=datetime.now)
-
-
 class UserPrompt(BaseModel):
     """Original user input for 3D generation."""
 
@@ -130,10 +119,6 @@ class SceneDescription(BaseModel):
     lighting: Optional[str] = Field(None, description="Lighting setup description")
     camera_notes: Optional[str] = Field(None, description="Special camera considerations")
     complexity: str = Field("medium", description="Estimated complexity: simple, medium, complex")
-    reference_analysis: Optional[ReferenceAnalysis] = Field(
-        None,
-        description="Analysis of reference images if provided"
-    )
 
 
 class GeneratedScript(BaseModel):
