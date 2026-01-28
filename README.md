@@ -4,7 +4,68 @@
 
 Transform text descriptions into Blender 3D models. The system automatically refines models through iterative visual feedback until they match your prompt.
 
-## Quick Start
+## 🎯 Two Ways to Use This Project
+
+### 1. **Vibe-Blender CLI** (This Tool)
+Lightweight, standalone command-line tool with full pipeline control.
+
+- ✅ **For**: Developers, technical users who want full control
+- 🔧 **Advantages**:
+  - Lightweight Python package - easy to extend and customize
+  - Full control over the generation process
+  - Simple to update with new features
+  - Configurable pipeline (LLM backend, iteration count, etc.)
+  - Perfect for automation and scripting
+- 📦 **Requires**: Python installation, OpenAI/Ollama API keys
+
+```bash
+vibe-blender generate "modern coffee table" -r reference.png
+```
+
+### 2. **Blender Skill for Claude Code** (Interactive) 👈 **Easy Start!**
+Conversational 3D modeling - leverage Claude Code's built-in capabilities.
+
+- ✅ **For**: Non-technical users, designers, anyone who wants to start quickly
+- 🔧 **Advantages**:
+  - No coding required - just talk to Claude naturally
+  - No API keys needed (uses Claude Code's reasoning)
+  - Easier onboarding - install Blender and go
+  - Interactive refinement through conversation
+  - Claude handles the complexity for you
+- 📦 **Requires**: Only Blender installed
+
+```
+You: "Create a Japanese tea house with tokonoma alcove"
+Claude: [writes script, executes, shows renders, iterates]
+You: "Make it more minimalist"
+Claude: [refines design and presents updated version]
+```
+
+**🚀 Try the Skill** (Located in `.claude/skills/blender/`):
+1. Install Blender: `brew install blender` (macOS) or download from blender.org
+2. Set environment: `export BLENDER_PATH="/path/to/blender"`
+3. Ask Claude: `"Create a red cube"`
+
+See `.claude/skills/blender/README.md` for complete setup guide.
+
+---
+
+**Which should I choose?**
+
+| | CLI | Skill |
+|---|---|---|
+| **Best for** | Technical users | Non-technical users |
+| **Control** | Full pipeline control | Claude manages workflow |
+| **Extensibility** | Easy to add features | Uses Claude's built-in abilities |
+| **Setup complexity** | Moderate (API keys, config) | Simple (just Blender) |
+| **Interaction** | Command-line flags | Natural conversation |
+| **Use case** | Automation, customization | Quick prototyping, learning |
+
+Both use the same ReAct self-correction principles and share rendering utilities!
+
+---
+
+## Quick Start (CLI)
 
 ```bash
 # Install
