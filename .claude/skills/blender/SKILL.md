@@ -108,7 +108,71 @@ Blender units = meters:
 
 ## ReAct Workflow
 
-**Important**: Create ONE timestamped output directory at the start (e.g., `outputs/20260128_001500/`). All iterations for this request go into subdirectories: `iteration_01/`, `iteration_02/`, etc.
+**Important**: Understand when to create a new session vs. continue existing one.
+
+### New Session vs. Continuation
+
+**Create NEW session when**:
+- User starts a completely new model/object request
+- Fresh start with no connection to previous work
+
+**Continue EXISTING session when**:
+- User adds instructions based on current scene: "add furniture", "make it bigger", "change color to blue"
+- User refines or modifies the current model
+- It's a follow-up request in the same conversation about the same model
+
+### Starting a New Session
+
+Create a timestamped session directory:
+```bash
+# Generate timestamp and create session directory
+timestamp=$(date +%Y%m%d_%H%M%S)
+session_dir="outputs/${timestamp}"
+mkdir -p "$session_dir"
+
+# Create log files
+touch "$session_dir/prompt.txt" "$session_dir/critique.log"
+
+# Log the initial user prompt
+echo "User prompt: [full user request]" > "$session_dir/prompt.txt"
+```
+
+**Note**: This creates the session in your **current working directory**, not inside `.claude/skills/blender/`.
+
+### Continuing an Existing Session
+
+When user adds new instructions (e.g., "add some furniture"):
+
+```bash
+# Use existing session_dir (from previous work)
+# DO NOT create new session!
+
+# Append new prompt to existing prompt.txt
+echo "" >> "$session_dir/prompt.txt"
+echo "Additional request: [new instruction]" >> "$session_dir/prompt.txt"
+
+# Continue with next iteration number
+# If last was iteration_02, next is iteration_03
+```
+
+**Example continuation**:
+```
+User initially: "Create a tea house"
+  → Create session: outputs/20260128_001500/
+  → Log: "User prompt: Create a tea house"
+  → iteration_01, iteration_02
+
+User follow-up: "add some furniture"
+  → Same session: outputs/20260128_001500/
+  → Append: "Additional request: add some furniture"
+  → iteration_03 (continues from iteration_02)
+```
+
+**Key points**:
+- Session is created in **current working directory** (not inside .claude/skills/blender)
+- Timestamp format: YYYYMMDD_HHMMSS (e.g., 20260128_223045)
+- Use `>` for initial prompt (overwrites), `>>` for additional prompts (appends)
+- Continuation uses the same session_dir, just increments iteration number
 
 ### Phase 1: Understand Request
 1. **Parse requirements**: Object type, style, materials, scale, details
@@ -267,11 +331,34 @@ Use the Read tool to view ALL 4 renders. Evaluate against user request using thi
 
 **Total Score: 0-10**
 
+**IMPORTANT**:
+1. **State the score explicitly**: "Score: 8/10" or "Score: 5/10"
+2. **Log the critique** to the session folder:
+   ```bash
+   cat >> "$session_dir/critique.log" << EOF
+
+   === Iteration XX - Score: X/10 ===
+   Accuracy: X/2
+   Geometry: X/2
+   Materials: X/2
+   Completeness: X/2
+   Quality: X/2
+
+   Issues identified:
+   - [issue 1]
+   - [issue 2]
+
+   Action: [iterate/present]
+   EOF
+   ```
+
+**Note**: Use `$session_dir` variable (set during session creation or continuation) to reference the correct session directory.
+
 #### Self-Assessment Guide
 
 **8-10 points**: Excellent quality
 - Action: Present to user with 4-view grid
-- Say: "Here's your [object]. The model includes [key features]."
+- Say: "**Score: X/10** - Here's your [object]. The model includes [key features]."
 
 **5-7 points**: Good but improvable
 - If iteration < 3: Identify 1-2 specific issues, iterate
@@ -316,11 +403,14 @@ Score ≥ 8 OR iteration ≥ 5?
 
 **When presenting**:
 1. Show 4-view grid image (use Read tool first)
-2. Summarize what was created
-3. Mention key features
-4. Provide output directory path (e.g., `outputs/TIMESTAMP/iteration_02/`)
-5. Mention how many iterations it took
-6. User can find model.blend, renders, and GIF in the iteration folder
+2. **State final score**: "Final Score: X/10"
+3. Summarize what was created
+4. Mention key features
+5. Provide output directory path (e.g., `outputs/TIMESTAMP/iteration_02/`)
+6. Mention how many iterations it took
+7. Tell user about logs: "See `prompt.txt` and `critique.log` for full history"
+8. User can find model.blend, renders, and GIF in the iteration folder
+9. **Remember the session_dir** - user might add follow-up requests!
 
 ## Code Patterns
 

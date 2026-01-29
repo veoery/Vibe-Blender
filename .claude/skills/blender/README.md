@@ -30,7 +30,21 @@ Just ask Claude to create 3D models:
 "Generate a metallic gold sphere"
 ```
 
-Claude will show you a 4-view render and save files to `outputs/TIMESTAMP/model.blend`
+Claude will show you a 4-view render and save files to `outputs/TIMESTAMP/model.blend` in your current directory
+
+**Continuing a session**: You can add follow-up requests without creating a new session:
+```
+You: "Create a Japanese tea house"
+Claude: [creates tea house in outputs/20260128_001500/]
+
+You: "Add some furniture inside"
+Claude: [continues in same session, creates iteration_03 with furniture]
+
+You: "Make the roof darker"
+Claude: [continues in same session, creates iteration_04 with darker roof]
+```
+
+All changes are logged in `prompt.txt` and tracked through iterations!
 
 ## Features
 
@@ -166,9 +180,11 @@ You'll also get:
 
 ### Output Locations
 
-All outputs are saved with timestamps and iteration tracking:
+All outputs are saved with timestamps and full logging:
 ```
 outputs/YYYYMMDD_HHMMSS/
+├── prompt.txt              # All user requests (initial + follow-ups)
+├── critique.log            # All critique feedback with scores
 ├── script.py               # Global script (edited across iterations)
 ├── iteration_01/           # First attempt
 │   ├── script.py           # Snapshot of script at iteration 1
@@ -186,8 +202,22 @@ outputs/YYYYMMDD_HHMMSS/
 ├── iteration_02/           # If refined
 │   ├── script.py           # Snapshot at iteration 2 (shows changes)
 │   └── ...
-└── iteration_03/           # If refined again
+└── iteration_03/           # Follow-up requests (e.g., "add furniture")
     └── ...
+```
+
+**Logging**:
+- `prompt.txt` contains ALL requests (initial + any follow-ups appended)
+- `critique.log` has all scores and feedback from every iteration
+- Perfect for understanding the entire design evolution!
+
+**Example prompt.txt**:
+```
+User prompt: Create a Japanese tea house with tokonoma and nijiriguchi
+
+Additional request: add some furniture inside
+
+Additional request: make the roof darker brown
 ```
 
 **Token efficiency**: Claude edits the global `script.py` instead of writing new scripts. Each iteration folder gets a snapshot for history. Example: `outputs/20260127_235900/iteration_02/`
