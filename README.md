@@ -71,10 +71,10 @@ Both use the same ReAct self-correction principles and share rendering utilities
 
 | Iteration | Visual Progress | Feedback/Refinement |
 | :--- | :--- | :--- |
-| **1. Blockout** | ![It 1](outputs/20260128_100000/iteration_01/renders/turntable.gif) | Established base structure. **Feedback:** Recess the tokonoma and increase interior space. |
-| **2. Details** | ![It 2](outputs/20260128_100000/iteration_02/renders/turntable.gif) | Added shoji grids and tokobashira. **Feedback:** Open facade and add garden elements. |
-| **3. Garden** | ![It 3](outputs/20260128_100000/iteration_03/renders/turntable.gif) | Integrated veranda and stone lantern. **Feedback:** Add a tree and fix roof pyramidal shape. |
-| **4. Final** | ![It 4](outputs/20260128_100000/iteration_04/renders/turntable.gif) | **SUCCESS:** Refined composition with foliage and accurate wabi-sabi proportions. |
+| **1. Blockout** | ![It 1](examples/20260128_100000/iteration_01/renders/turntable.gif) | Established base structure. **Feedback:** Recess the tokonoma and increase interior space. |
+| **2. Details** | ![It 2](examples/20260128_100000/iteration_02/renders/turntable.gif) | Added shoji grids and tokobashira. **Feedback:** Open facade and add garden elements. |
+| **3. Garden** | ![It 3](examples/20260128_100000/iteration_03/renders/turntable.gif) | Integrated veranda and stone lantern. **Feedback:** Add a tree and fix roof pyramidal shape. |
+| **4. Final** | ![It 4](examples/20260128_100000/iteration_04/renders/turntable.gif) | **SUCCESS:** Refined composition with foliage and accurate wabi-sabi proportions. |
 
 ---
 
