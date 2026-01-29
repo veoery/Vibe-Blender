@@ -169,9 +169,11 @@ You'll also get:
 All outputs are saved with timestamps and iteration tracking:
 ```
 outputs/YYYYMMDD_HHMMSS/
+├── script.py               # Global script (edited across iterations)
 ├── iteration_01/           # First attempt
+│   ├── script.py           # Snapshot of script at iteration 1
 │   ├── model.blend
-│   ├── full_script.py
+│   ├── full_script.py      # With render code injected
 │   ├── blender.log
 │   └── renders/
 │       ├── view_front.png
@@ -182,12 +184,13 @@ outputs/YYYYMMDD_HHMMSS/
 │       ├── turntable.gif
 │       └── turntable_frames/
 ├── iteration_02/           # If refined
+│   ├── script.py           # Snapshot at iteration 2 (shows changes)
 │   └── ...
 └── iteration_03/           # If refined again
     └── ...
 ```
 
-Each iteration is preserved so you can compare improvements. Example: `outputs/20260127_235900/iteration_02/`
+**Token efficiency**: Claude edits the global `script.py` instead of writing new scripts. Each iteration folder gets a snapshot for history. Example: `outputs/20260127_235900/iteration_02/`
 
 ## Tips for Better Results
 

@@ -126,6 +126,10 @@ Blender units = meters:
 - Think: Start with cube for top (scale flat), 4 cylinders for legs, wood material (brown, low metallic, medium roughness)
 
 ### Phase 2: Write Script
+**Iteration 1**: Use Write tool to create `outputs/TIMESTAMP/script.py`
+
+**Iteration 2+**: Use Edit tool to modify the existing global script
+
 Create a Blender Python script following this structure:
 
 ```python
@@ -161,52 +165,67 @@ bpy.ops.wm.save_as_mainfile(filepath=OUTPUT_BLEND_PATH)
 - Don't import bpy/math/os (auto-injected)
 
 ### Phase 3: Execute
-1. **Save script** to scratchpad directory (use Write tool)
+**Workflow for ALL iterations** (consistent process):
 
-2. **Create timestamped output directory** once at the start:
+1. **Create timestamped output directory** (once at start):
    ```python
    from datetime import datetime
    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
    base_output_dir = f"outputs/{timestamp}"
    ```
 
-3. **For each iteration**, create iteration subdirectory:
-   ```python
-   iteration = 1  # Increment for each refinement
-   output_dir = f"{base_output_dir}/iteration_{iteration:02d}"
+2. **Write/Edit the global script**:
+   - **Iteration 1**: Write to `outputs/TIMESTAMP/script.py`
+   - **Iteration 2+**: Edit `outputs/TIMESTAMP/script.py` (saves tokens!)
+
+3. **Copy script to iteration folder**:
+   ```bash
+   mkdir -p outputs/TIMESTAMP/iteration_XX
+   cp outputs/TIMESTAMP/script.py outputs/TIMESTAMP/iteration_XX/script.py
    ```
 
-4. **Run executor**:
+4. **Execute**:
    ```bash
    BLENDER_PATH="/Applications/Blender.app/Contents/MacOS/Blender" \
    python .claude/skills/blender/helpers/execute_blender.py \
-       <script_path> \
-       outputs/<timestamp>/iteration_01
+       outputs/TIMESTAMP/iteration_XX/script.py \
+       outputs/TIMESTAMP/iteration_XX
    ```
 
-   **Example workflow**:
-   ```bash
-   # First iteration
-   python helpers/execute_blender.py /tmp/script.py outputs/20260127_235900/iteration_01
+**Example workflow**:
+```bash
+# Iteration 1
+Write outputs/20260127_235900/script.py
+mkdir -p outputs/20260127_235900/iteration_01
+cp outputs/20260127_235900/script.py outputs/20260127_235900/iteration_01/script.py
+python helpers/execute_blender.py outputs/20260127_235900/iteration_01/script.py outputs/20260127_235900/iteration_01
 
-   # Second iteration (if needed)
-   python helpers/execute_blender.py /tmp/script_v2.py outputs/20260127_235900/iteration_02
-   ```
+# Iteration 2 (refine)
+Edit outputs/20260127_235900/script.py  # ← Edit the global script!
+mkdir -p outputs/20260127_235900/iteration_02
+cp outputs/20260127_235900/script.py outputs/20260127_235900/iteration_02/script.py
+python helpers/execute_blender.py outputs/20260127_235900/iteration_02/script.py outputs/20260127_235900/iteration_02
+```
 
    **Note**: Set BLENDER_PATH to your Blender executable location
 
    **Output structure**:
    ```
    outputs/20260127_235900/
+   ├── script.py              # Global script (gets edited)
    ├── iteration_01/
+   │   ├── script.py          # Copy of script at iteration 1
    │   ├── model.blend
    │   ├── full_script.py
    │   ├── blender.log
    │   └── renders/
    │       ├── grid_4view.png
    │       └── turntable.gif
-   ├── iteration_02/ (if refined)
-   └── iteration_03/ (if refined again)
+   ├── iteration_02/          # If refined
+   │   ├── script.py          # Copy of script at iteration 2
+   │   └── ...
+   └── iteration_03/          # If refined again
+       └── ...
    ```
 
 3. **Parse JSON output** for render paths:
@@ -289,10 +308,11 @@ Score ≥ 8 OR iteration ≥ 5?
 ```
 
 **When iterating**:
-1. Keep what works (don't rewrite from scratch)
-2. Focus on specific issues identified in critique
-3. Make incremental improvements
-4. Test one change at a time when possible
+1. Use Edit tool on the global script (token efficient!)
+2. Keep what works (don't rewrite from scratch)
+3. Focus on specific issues identified in critique
+4. Make incremental improvements
+5. Copy the edited script to the new iteration folder before executing
 
 **When presenting**:
 1. Show 4-view grid image (use Read tool first)
