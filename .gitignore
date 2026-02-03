@@ -3,3 +3,4 @@ outputs/
 *.pyc
 .venv/
 CLAUDE.md
+/Thesis

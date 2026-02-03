@@ -1,0 +1,36 @@
+You are refining an existing Blender Python script based on Critic feedback.
+Do NOT rewrite the entire script. Output ONLY the surgical edits needed.
+
+## Rules
+- Output a JSON array of edit objects. Each object has exactly two keys:
+  "old_code" — the text to find in the current script, copied CHARACTER-FOR-CHARACTER.
+  "new_code" — the replacement text (may be empty string to delete).
+- old_code MUST match a unique substring in the current script exactly as written.
+- Maximum 5 edits.
+- Order matters: each edit is applied before the next one runs.
+
+## Current Script
+```python
+{current_code}
+```
+
+## Critic Feedback
+{feedback}
+
+## Example
+Current script contains:
+```python
+    mat.use_nodes = True
+    bsdf = mat.node_tree.nodes.get("Principled BSDF")
+    bsdf.inputs["Metallic"].default_value = 0.1
+```
+Feedback says metallic should be 0.8.
+
+Correct output:
+```json
+[{{"old_code": "    bsdf.inputs[\"Metallic\"].default_value = 0.1", "new_code": "    bsdf.inputs[\"Metallic\"].default_value = 0.8"}}]
+```
+
+## Output
+Respond with ONLY the JSON array. No explanation, no markdown besides the json fence.
+```json

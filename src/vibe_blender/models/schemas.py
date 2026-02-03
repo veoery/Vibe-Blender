@@ -127,6 +127,8 @@ class GeneratedScript(BaseModel):
     code: str = Field(..., description="The Python script code")
     iteration: int = Field(..., ge=1, description="Which iteration this script is from")
     based_on_feedback: Optional[str] = Field(None, description="Feedback this iteration addresses")
+    edit_based: bool = Field(False, description="True if produced by applying edits, False if fully regenerated")
+    edits_applied: Optional[int] = Field(None, description="Number of edits applied (None if not edit-based)")
     timestamp: datetime = Field(default_factory=datetime.now)
 
 

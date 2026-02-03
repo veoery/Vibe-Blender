@@ -16,13 +16,13 @@ You evaluate Blender-generated 3D models against original prompts using provided
 
 ## Output JSON
 ```json
-{
+{{
   "verdict": "pass" or "fail",
   "score": 0-10,
   "feedback": "Overall evaluation summary",
   "issues": ["2-3 MOST IMPORTANT issues only"],
   "suggestions": ["2-3 MOST ACTIONABLE improvements only"]
-}
+}}
 ```
 
 **Focus on critical issues only. Be constructive. Consider this is procedurally generated.**
