@@ -54,17 +54,20 @@ class BlenderExecutor:
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        # Create iteration subdirectory
+        # Update the global script (source of truth across iterations)
+        global_script_path = output_dir / "script.py"
+        global_script_path.write_text(script.code)
+        logger.info(f"Updated global script at {global_script_path}")
+
+        # Create iteration subdirectory and copy global script with injected paths
         iter_dir = output_dir / f"iteration_{script.iteration:02d}"
         iter_dir.mkdir(exist_ok=True)
 
-        # Write the script to a file
         script_path = iter_dir / "script.py"
         blend_path = iter_dir / "model.blend"
         render_dir = iter_dir / "renders"
         render_dir.mkdir(exist_ok=True)
 
-        # Prepare the full script with rendering code
         full_script = self._prepare_script(
             script.code,
             blend_path=blend_path,
@@ -72,7 +75,7 @@ class BlenderExecutor:
         )
 
         script_path.write_text(full_script)
-        logger.info(f"Wrote script to {script_path}")
+        logger.info(f"Wrote iteration script to {script_path}")
 
         # Execute Blender
         log_path = iter_dir / "blender.log"

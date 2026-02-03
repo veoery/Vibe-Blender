@@ -270,6 +270,8 @@ Feedback: {feedback}"""
                 edits = self._parse_edits(response)
                 if edits is None:
                     raise ValueError("Failed to parse edits from LLM response")
+                logger.info("edits:")
+                logger.info(edits)
 
                 result = apply_edits(original_script.code, edits)
                 if not result.success:

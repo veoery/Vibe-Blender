@@ -13,7 +13,7 @@ Lightweight, standalone command-line tool with full pipeline control.
 - 🔧 **Advantages**:
   - Lightweight Python package - easy to extend and customize
   - Full control over the generation process
-  - Simple to update with new features
+  - Smart refinement — surgically edits scripts instead of regenerating, cutting API costs significantly
   - Configurable pipeline (LLM backend, iteration count, etc.)
   - Perfect for automation and scripting
 - 📦 **Requires**: Python installation, OpenAI/Ollama API keys
@@ -78,21 +78,61 @@ Both use the same ReAct self-correction principles and share rendering utilities
 
 ---
 
-## Quick Start (CLI)
+## Installation
+
+### Prerequisites
+
+| Requirement | Notes |
+|---|---|
+| **Blender 3.x+** | macOS: `brew install blender` · Windows/Linux: [blender.org](https://www.blender.org/download/) |
+| **Python 3.10+** | Already bundled if you install uv below |
+| **OpenAI API key** | Required for the default backend · get one at [platform.openai.com](https://platform.openai.com) |
+
+### 1. Install uv (if you don't have it)
 
 ```bash
-# Install
-pip install -e ".[dev]"
+# macOS / Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Initialize config
-vibe-blender init
+# Windows (PowerShell)
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
 
-# Edit config.yaml: set Blender path and OpenAI API key
+### 2. Clone and set up the environment
 
-# Verify setup
-vibe-blender doctor
+```bash
+git clone https://github.com/ethancheung/vibe-blender.git
+cd vibe-blender
 
-# Generate your first model
+uv venv                                          # creates .venv
+source .venv/bin/activate                        # Windows: .venv\Scripts\activate
+uv pip install -e ".[dev]"                       # install package + dev deps
+```
+
+### 3. Configure
+
+```bash
+vibe-blender init            # creates config.yaml in the current directory
+```
+
+Open `config.yaml` and fill in two values:
+
+```yaml
+blender:
+  executable: "/Applications/Blender.app/Contents/MacOS/Blender"   # path to your Blender binary
+
+llm:
+  openai:
+    api_key: "sk-..."        # or set the OPENAI_API_KEY env var instead
+```
+
+> **Tip** — you can leave `api_key` empty and just export the env var:
+> `export OPENAI_API_KEY="sk-..."`
+
+### 4. Verify and generate
+
+```bash
+vibe-blender doctor                              # checks Blender + API key
 vibe-blender generate "A modern coffee table"
 ```
 
@@ -104,7 +144,7 @@ vibe-blender generate "A modern coffee table"
 4. **Execution** - Runs script in Blender (headless)
 5. **Rendering** - Generates 4-view grid + turntable GIF
 6. **Critique** - AI evaluates renders (Pass: saves model, Fail: refines)
-7. **Iteration** - Auto-refines up to 5 times until passing
+7. **Iteration** - Auto-refines up to 5 times. When possible the pipeline applies only the changes the critic flagged rather than regenerating the whole script from scratch — this keeps costs low and avoids breaking parts that already work.
 
 ## Usage
 
@@ -130,12 +170,15 @@ vibe-blender generate "A vase" --output ./models --max-retries 3 --verbose
 ```
 outputs/20240126_153045/
 ├── pipeline.log              # Full execution log
+├── script.py                 # Latest script (updated each iteration)
 ├── iteration_01/
-│   ├── script.py            # Blender script
+│   ├── script.py            # Snapshot for this iteration
 │   ├── model.blend          # Blender file
 │   └── renders/
 │       ├── grid_4view.png   # 4 views (Front/Top/Side/Iso)
 │       └── turntable.gif    # 360° animation
+├── iteration_02/            # Created if iteration 1 didn't pass
+│   └── ...
 └── final/
     └── model.blend          # Final approved model
 ```
